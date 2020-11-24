@@ -1,0 +1,57 @@
+# Установка wget 
+yum install wget -y
+
+# Скачиваем jir
+wget https://www.atlassian.com/software/jira/downloads/binary/atlassian-jira-software-7.5.0-x64.bin
+
+# Даем права на исполнение
+chmod +x atlassian-jira-software-7.5.0-x64.bin
+
+# Запускаем установку
+./atlassian-jira-software-7.5.0-x64.bin
+
+# Скрипт который переписываем на systemd unit
+/etc/init.d/jira
+
+
+# Создаем сервис jira
+cat << EOF > /etc/systemd/system/jira.service
+[Unit]
+Description=Jira
+After=network.target
+
+[Service]
+Type=forking
+User=jira
+PIDFile=/opt/atlassian/jira/work/catalina.pid
+ExecStart=/opt/atlassian/jira/bin/start-jira.sh
+ExecStop=/opt/atlassian/jira/bin/stop-jira.sh
+TimeoutSec=200
+LimitNOFILE=4096
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+# Запускаем и смотрим статус
+systemctl start jira.service
+
+systemctl status jira.service
+● jira.service - Jira
+   Loaded: loaded (/etc/systemd/system/jira.service; disabled; vendor preset: disabled)
+   Active: active (running) since Tue 2020-11-24 21:56:26 UTC; 3min 3s ago
+  Process: 17250 ExecStart=/opt/atlassian/jira/bin/start-jira.sh (code=exited, status=0/SUCCESS)
+ Main PID: 17278 (java)
+   CGroup: /system.slice/jira.service
+           └─17278 /opt/atlassian/jira/jre//bin/java -Djava.util.logging.config.file=/opt/atlassian/jira/conf/logging.properties -Djava.util.logging.manager=org.apa...
+
+Nov 24 21:56:26 otusc7 start-jira.sh[17250]: .:,.$MMMMMMM
+Nov 24 21:56:26 otusc7 start-jira.sh[17250]: .IMMMM..NMMMMMD.
+Nov 24 21:56:26 otusc7 start-jira.sh[17250]: .8MMMMM:  :NMMMMN.
+Nov 24 21:56:26 otusc7 start-jira.sh[17250]: .MMMMMM.   .MMMMM~.
+Nov 24 21:56:26 otusc7 start-jira.sh[17250]: .MMMMMN    .MMMMM?.
+Nov 24 21:56:26 otusc7 start-jira.sh[17250]: Atlassian JIRA
+Nov 24 21:56:26 otusc7 start-jira.sh[17250]: Version : 7.5.0
+
