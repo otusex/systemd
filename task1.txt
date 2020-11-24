@@ -1,0 +1,63 @@
+
+# Создаем ENV watchlog
+cat << EOF > /etc/sysconfig/watchlog
+WORD="ALERT"
+LOG=/var/log/watchlog.log
+EOF
+
+# Создаем лог который будем парсить
+cat << EOF > /var/log/watchlog.log
+‘ALERT’
+EOF
+
+
+# Создаем скрипт который отправляет лог в системный журнал
+cat << EOF > /opt/watchlog.sh
+#!/bin/bash
+WORD=$1
+LOG=$2
+DATE=`date`
+if grep $WORD $LOG &> /dev/null
+then
+logger "$DATE: I found word, Master!"
+else
+exit 0
+fi
+EOF
+
+
+# Создаем наш watch service
+cat << EOF > /etc/systemd/system/watchlog.service
+[Unit]
+Description=My watchlog service
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sysconfig/watchlog
+ExecStart=/opt/watchlog.sh $WORD $LOG
+EOF
+
+# Создаем watch timer
+cat << EOF > /etc/systemd/system/watchlog.timer
+[Unit]
+Description=Run watchlog script every 30 second
+[Timer]
+OnActiveSec=1sec
+OnCalendar=*:*:0/30
+AccuracySec=1us
+Unit=watchlog.service
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Запускаем watchlog.timer
+systemctl enable watchlog.timer
+systemctl start watchlog.timer
+
+
+# Смотрим результат
+tail -f /var/log/messages
+Nov 24 20:21:00 localhost systemd: Started My watchlog service.
+Nov 24 20:21:30 localhost systemd: Starting My watchlog service...
+Nov 24 20:21:30 localhost root: Tue Nov 24 20:21:30 UTC 2020: I found word, Master!
+Nov 24 20:21:30 localhost systemd: Started My watchlog service.
+
