@@ -44,6 +44,10 @@ PidFile /var/run/httpd-f.pid
 Listen 127.0.1.1:8080
 
 
+# Запускаем
+systemctl start httpd@first.service
+systemctl start httpd@second.service
+
 
 # Смотрим результат
 systemctl status httpd@second.service
